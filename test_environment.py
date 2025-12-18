@@ -16,13 +16,16 @@ def test_imports():
         ('numpy', 'NumPy'),
         ('pandas', 'Pandas'),
         ('sklearn', 'Scikit-learn'),
-        ('torch', 'PyTorch'),
-        ('transformers', 'Transformers'),
         ('datasets', 'Datasets'),
         ('bs4', 'BeautifulSoup4'),
         ('tqdm', 'TQDM'),
         ('matplotlib', 'Matplotlib'),
         ('seaborn', 'Seaborn'),
+    ]
+    
+    optional_packages = [
+        ('torch', 'PyTorch'),
+        ('transformers', 'Transformers'),
     ]
     
     success = True
@@ -41,13 +44,31 @@ def test_imports():
     
     print()
     
+    # 检查可选包
+    print("可选依赖（仅 BERT 实验需要）:")
+    optional_available = True
+    for package, name in optional_packages:
+        try:
+            module = __import__(package)
+            version = getattr(module, '__version__', '未知版本')
+            print(f"✓ {name:20s} {version}")
+        except ImportError:
+            print(f"- {name:20s} 未安装（可选）")
+            optional_available = False
+    
+    print()
+    
     if success:
         print("=" * 50)
-        print("✓ 所有依赖包已正确安装！")
+        print("✓ 核心依赖包已正确安装！")
+        if not optional_available:
+            print("\n注意: PyTorch/Transformers 未安装")
+            print("      CPU 实验不需要这些包，可以正常运行")
+            print("      如需运行 BERT: pip install torch transformers")
         print("=" * 50)
     else:
         print("=" * 50)
-        print("✗ 部分依赖包未安装，请运行:")
+        print("✗ 部分核心依赖包未安装，请运行:")
         print("  pip install -r requirements.txt")
         print("=" * 50)
     
@@ -63,11 +84,14 @@ def test_gpu():
             print(f"✓ GPU 可用: {torch.cuda.get_device_name(0)}")
             print(f"  CUDA 版本: {torch.version.cuda}")
             print(f"  显存: {torch.cuda.get_device_properties(0).total_memory / 1e9:.1f} GB")
+            print(f"  说明: 可以运行 BERT 实验（可选）")
         else:
-            print("⚠ GPU 不可用，将使用 CPU")
-            print("  建议: BERT 训练需要 GPU，传统模型可用 CPU")
+            print("ℹ️  GPU 不可用，将使用 CPU")
+            print("  说明: 本项目专为 CPU 优化，传统模型运行快速")
+            print("       不需要 GPU 即可完成全部实验要求")
     except ImportError:
-        print("✗ PyTorch 未安装")
+        print("ℹ️  PyTorch 未安装（CPU 实验不需要）")
+        print("  说明: 传统模型（SVM/NB）性能优秀，无需深度学习")
 
 def test_data():
     """测试数据目录是否存在"""

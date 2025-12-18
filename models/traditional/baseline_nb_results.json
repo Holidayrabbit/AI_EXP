@@ -1,0 +1,16 @@
+{
+  "model_type": "nb",
+  "method": "baseline",
+  "target_accuracy": 0.82808189342239,
+  "target_f1": 0.7464969974619258,
+  "confusion_matrix": [
+    [
+      898,
+      150
+    ],
+    [
+      1034,
+      4805
+    ]
+  ]
+}

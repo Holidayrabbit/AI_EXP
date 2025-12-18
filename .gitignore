@@ -17,18 +17,9 @@ data/processed/
 *.txt
 *.tar.gz
 
-# Models
-models/
-*.pkl
-*.pth
-*.bin
-pytorch_model.bin
 
-# Results
-results/
-*.png
-*.jpg
-*.json
+
+
 
 # IDEs
 .vscode/

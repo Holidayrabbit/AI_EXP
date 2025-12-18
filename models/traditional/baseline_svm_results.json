@@ -1,0 +1,16 @@
+{
+  "model_type": "svm",
+  "method": "baseline",
+  "target_accuracy": 0.822854653695368,
+  "target_f1": 0.736734220170999,
+  "confusion_matrix": [
+    [
+      864,
+      184
+    ],
+    [
+      1036,
+      4803
+    ]
+  ]
+}

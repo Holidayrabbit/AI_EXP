@@ -14,42 +14,40 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import confusion_matrix, classification_report
-import torch
-from torch.utils.data import Dataset, DataLoader
-from transformers import BertTokenizer, BertForSequenceClassification
+
 
 # 设置中文字体
 plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
-class SentimentDataset(Dataset):
-    """情感分析数据集"""
-    def __init__(self, texts, labels, tokenizer, max_length=256):
-        self.texts = texts
-        self.labels = labels
-        self.tokenizer = tokenizer
-        self.max_length = max_length
+# class SentimentDataset(Dataset):
+#     """情感分析数据集"""
+#     def __init__(self, texts, labels, tokenizer, max_length=256):
+#         self.texts = texts
+#         self.labels = labels
+#         self.tokenizer = tokenizer
+#         self.max_length = max_length
     
-    def __len__(self):
-        return len(self.texts)
+#     def __len__(self):
+#         return len(self.texts)
     
-    def __getitem__(self, idx):
-        text = str(self.texts[idx])
-        label = self.labels[idx]
+#     def __getitem__(self, idx):
+#         text = str(self.texts[idx])
+#         label = self.labels[idx]
         
-        encoding = self.tokenizer(
-            text,
-            max_length=self.max_length,
-            padding='max_length',
-            truncation=True,
-            return_tensors='pt'
-        )
+#         encoding = self.tokenizer(
+#             text,
+#             max_length=self.max_length,
+#             padding='max_length',
+#             truncation=True,
+#             return_tensors='pt'
+#         )
         
-        return {
-            'input_ids': encoding['input_ids'].flatten(),
-            'attention_mask': encoding['attention_mask'].flatten(),
-            'label': torch.tensor(label, dtype=torch.long)
-        }
+#         return {
+#             'input_ids': encoding['input_ids'].flatten(),
+#             'attention_mask': encoding['attention_mask'].flatten(),
+#             'label': torch.tensor(label, dtype=torch.long)
+#         }
 
 def load_data(data_path):
     """加载数据"""
@@ -68,33 +66,33 @@ def evaluate_traditional_model(model_path, vectorizer_path, test_data):
     
     return y_pred
 
-def evaluate_bert_model(model_path, test_data):
-    """评估 BERT 模型"""
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+# def evaluate_bert_model(model_path, test_data):
+#     """评估 BERT 模型"""
+#     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
-    tokenizer = BertTokenizer.from_pretrained(model_path)
-    model = BertForSequenceClassification.from_pretrained(model_path)
-    model.to(device)
-    model.eval()
+#     tokenizer = BertTokenizer.from_pretrained(model_path)
+#     model = BertForSequenceClassification.from_pretrained(model_path)
+#     model.to(device)
+#     model.eval()
     
-    dataset = SentimentDataset(
-        test_data['text'].values, 
-        test_data['label'].values, 
-        tokenizer
-    )
-    dataloader = DataLoader(dataset, batch_size=16)
+#     dataset = SentimentDataset(
+#         test_data['text'].values, 
+#         test_data['label'].values, 
+#         tokenizer
+#     )
+#     dataloader = DataLoader(dataset, batch_size=16)
     
-    predictions = []
-    with torch.no_grad():
-        for batch in dataloader:
-            input_ids = batch['input_ids'].to(device)
-            attention_mask = batch['attention_mask'].to(device)
+#     predictions = []
+#     with torch.no_grad():
+#         for batch in dataloader:
+#             input_ids = batch['input_ids'].to(device)
+#             attention_mask = batch['attention_mask'].to(device)
             
-            outputs = model(input_ids=input_ids, attention_mask=attention_mask)
-            preds = torch.argmax(outputs.logits, dim=1)
-            predictions.extend(preds.cpu().numpy())
+#             outputs = model(input_ids=input_ids, attention_mask=attention_mask)
+#             preds = torch.argmax(outputs.logits, dim=1)
+#             predictions.extend(preds.cpu().numpy())
     
-    return np.array(predictions)
+#     return np.array(predictions)
 
 def plot_confusion_matrix(y_true, y_pred, title, save_path):
     """绘制混淆矩阵"""
@@ -283,43 +281,55 @@ def main():
     results_dir = Path('../results')
     results_dir.mkdir(parents=True, exist_ok=True)
     
-    # 评估基线 SVM
-    svm_model = '../models/traditional/baseline_svm.pkl'
-    svm_vectorizer = '../models/traditional/baseline_svm_vectorizer.pkl'
-    if os.path.exists(svm_model) and os.path.exists(svm_vectorizer):
-        print("\n评估基线 SVM...")
-        y_pred = evaluate_traditional_model(svm_model, svm_vectorizer, test_data)
-        plot_confusion_matrix(
-            test_data['label'].values, y_pred,
-            '基线 SVM 混淆矩阵 (目标域)',
-            results_dir / 'confusion_matrix_baseline_svm.png'
-        )
-        analyze_errors(test_data, y_pred)
+    # 定义需要评估的模型列表
+    models_to_evaluate = [
+        ('baseline_svm', '基线 SVM'),
+        ('baseline_nb', '基线 NB'),
+        ('combined_svm_1pct', '组合 SVM (1%)'),
+        ('combined_svm_5pct', '组合 SVM (5%)'),
+        ('combined_svm_10pct', '组合 SVM (10%)'),
+        ('combined_nb_5pct', '组合 NB (5%)'),
+    ]
     
-    # 评估 BERT Stage 1
-    bert_stage1 = '../models/bert/stage1/best_model'
-    if os.path.exists(bert_stage1):
-        print("\n评估 BERT Stage 1 (仅源域训练)...")
-        y_pred = evaluate_bert_model(bert_stage1, test_data)
-        plot_confusion_matrix(
-            test_data['label'].values, y_pred,
-            'BERT Stage 1 混淆矩阵 (目标域)',
-            results_dir / 'confusion_matrix_bert_stage1.png'
-        )
-        analyze_errors(test_data, y_pred)
-    
-    # 评估 BERT Stage 2
-    for ratio in ['1pct', '5pct', '10pct']:
-        bert_stage2 = f'../models/bert/stage2/best_model_{ratio}'
-        if os.path.exists(bert_stage2):
-            print(f"\n评估 BERT Stage 2 ({ratio})...")
-            y_pred = evaluate_bert_model(bert_stage2, test_data)
+    # 评估所有传统模型
+    for model_name, display_name in models_to_evaluate:
+        model_path = f'../models/traditional/{model_name}.pkl'
+        vectorizer_path = f'../models/traditional/{model_name}_vectorizer.pkl'
+        
+        if os.path.exists(model_path) and os.path.exists(vectorizer_path):
+            print(f"\n评估 {display_name}...")
+            y_pred = evaluate_traditional_model(model_path, vectorizer_path, test_data)
             plot_confusion_matrix(
                 test_data['label'].values, y_pred,
-                f'BERT Stage 2 ({ratio}) 混淆矩阵 (目标域)',
-                results_dir / f'confusion_matrix_bert_stage2_{ratio}.png'
+                f'{display_name} 混淆矩阵 (目标域)',
+                results_dir / f'confusion_matrix_{model_name}.png'
             )
             analyze_errors(test_data, y_pred)
+    
+    # # 评估 BERT Stage 1
+    # bert_stage1 = '../models/bert/stage1/best_model'
+    # if os.path.exists(bert_stage1):
+    #     print("\n评估 BERT Stage 1 (仅源域训练)...")
+    #     y_pred = evaluate_bert_model(bert_stage1, test_data)
+    #     plot_confusion_matrix(
+    #         test_data['label'].values, y_pred,
+    #         'BERT Stage 1 混淆矩阵 (目标域)',
+    #         results_dir / 'confusion_matrix_bert_stage1.png'
+    #     )
+    #     analyze_errors(test_data, y_pred)
+    
+    # # 评估 BERT Stage 2
+    # for ratio in ['1pct', '5pct', '10pct']:
+    #     bert_stage2 = f'../models/bert/stage2/best_model_{ratio}'
+    #     if os.path.exists(bert_stage2):
+    #         print(f"\n评估 BERT Stage 2 ({ratio})...")
+    #         y_pred = evaluate_bert_model(bert_stage2, test_data)
+    #         plot_confusion_matrix(
+    #             test_data['label'].values, y_pred,
+    #             f'BERT Stage 2 ({ratio}) 混淆矩阵 (目标域)',
+    #             results_dir / f'confusion_matrix_bert_stage2_{ratio}.png'
+    #         )
+    #         analyze_errors(test_data, y_pred)
     
     print("\n" + "="*60)
     print("评估报告生成完成！")

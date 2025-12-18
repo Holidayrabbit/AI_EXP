@@ -4,6 +4,7 @@ TripAdvisor 数据集预处理脚本
 """
 import os
 import re
+import ast
 import random
 from pathlib import Path
 from bs4 import BeautifulSoup
@@ -21,6 +22,21 @@ def clean_text(text):
     # 去除首尾空白
     text = text.strip()
     return text
+
+def extract_overall_rating(ratings_str):
+    """
+    从ratings字符串中提取overall评分
+    ratings格式: "{'service': 5.0, 'cleanliness': 5.0, 'overall': 5.0, ...}"
+    """
+    if pd.isna(ratings_str):
+        return None
+    
+    try:
+        # 将字符串转换为字典
+        ratings_dict = ast.literal_eval(ratings_str)
+        return ratings_dict.get('overall', None)
+    except (ValueError, SyntaxError):
+        return None
 
 def map_rating_to_label(rating):
     """
@@ -69,6 +85,12 @@ def prepare_tripadvisor(raw_file, data_dir='../data',
         if col in df.columns:
             rating_col = col
             break
+    
+    # 如果有ratings列，从中提取overall评分
+    if 'ratings' in df.columns:
+        print("从ratings列提取overall评分...")
+        df['score'] = df['ratings'].apply(extract_overall_rating)
+        rating_col = 'score'
     
     if text_col is None or rating_col is None:
         print(f"错误：未找到文本列或评分列")
@@ -129,4 +151,3 @@ if __name__ == '__main__':
             print(f"错误：文件不存在 {raw_file}")
         else:
             prepare_tripadvisor(raw_file)
-

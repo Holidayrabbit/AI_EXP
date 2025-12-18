@@ -15,7 +15,7 @@ cd src
 
 # 步骤 1: 准备数据
 echo "步骤 1: 准备 IMDb 数据集..."
-python prepare_imdb.py
+# python prepare_imdb.py
 
 echo ""
 echo "请确认 TripAdvisor 数据集已准备好："

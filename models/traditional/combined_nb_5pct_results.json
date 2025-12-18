@@ -1,0 +1,16 @@
+{
+  "model_type": "nb",
+  "method": "combined_5pct",
+  "target_accuracy": 0.851749673297517,
+  "target_f1": 0.5242784761192649,
+  "confusion_matrix": [
+    [
+      76,
+      972
+    ],
+    [
+      49,
+      5790
+    ]
+  ]
+}

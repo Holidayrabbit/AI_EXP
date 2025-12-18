@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Data
+data/raw/
+data/processed/
+*.csv
+*.txt
+*.tar.gz
+
+# Models
+models/
+*.pkl
+*.pth
+*.bin
+pytorch_model.bin
+
+# Results
+results/
+*.png
+*.jpg
+*.json
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Logs
+*.log
+
